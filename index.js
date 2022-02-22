@@ -27,8 +27,10 @@ app.get("/v1", async (req, res) => {
     const $ = cheerio.load(web);
 
     const title = $("head > title").text().trim();
-    const description = $('head > meta[name="description"]').text().trim();
-    const canonical = $('head > link[rel="canonical"]').text().trim();
+    const description = $('head > meta[name="description"]')
+      .attr("content")
+      .trim();
+    const canonical = $('head > link[rel="canonical"]').attr("href").trim();
 
     const shop = match(re(/Shopify\.shop = \"(.*)\";/gim, web));
     const locale = match(re(/Shopify\.locale = \"(.*)\";/gim, web));
