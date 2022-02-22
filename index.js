@@ -4,6 +4,7 @@ const ua = new (require("user-agents"))();
 const { re, match } = require("./regex");
 const puppeteer = require("puppeteer");
 const fs = require("fs");
+const sharp = require("sharp");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
@@ -57,21 +58,31 @@ app.get("/v1", async (req, res) => {
           "--no-sandbox",
           "--disable-setuid-sandbox",
           "--user-agent=" + ua.toString(),
-          "--window-size=1920,1080",
         ],
         ignoreDefaultArgs: ["--disable-extensions"],
       });
 
       const page = await browser.newPage();
 
-      await page.setViewport({ width: 1440, height: 1080 });
+      await page.setViewport({ width: 1200, height: 720 });
 
       // Goto the page url
       await page.goto(url, { waitUntil: "domcontentloaded" });
 
-      await page.screenshot({ path: process.cwd() + "/ss.png" });
+      await page.screenshot({ path: process.cwd() + "/ss_full.png" });
 
       await browser.close();
+
+      await sharp(process.cwd() + "/ss_full.png")
+        .resize({
+          width:
+            req.query.width && /^-?\d+$/.test(req.query.width)
+              ? req.query.width
+              : 500,
+        })
+        .toFile(process.cwd() + "/ss.png");
+
+      fs.unlinkSync(process.cwd() + "/ss_full.png");
     } catch (err) {
       return res
         .status(404)
