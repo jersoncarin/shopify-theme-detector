@@ -2,6 +2,8 @@ const cheerio = require("cheerio");
 const express = require("express");
 const ua = new (require("user-agents"))();
 const { re, match } = require("./regex");
+const puppeteer = require("puppeteer");
+const fs = require("fs");
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
@@ -47,6 +49,35 @@ app.get("/v1", async (req, res) => {
         .send({ message: "Request for theme not found", status: 404 });
     }
 
+    try {
+      const browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          "--use-gl=egl",
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--user-agent=" + ua.toString(),
+          "--window-size=1920,1080",
+        ],
+        ignoreDefaultArgs: ["--disable-extensions"],
+      });
+
+      const page = await browser.newPage();
+
+      await page.setViewport({ width: 1440, height: 1080 });
+
+      // Goto the page url
+      await page.goto(url, { waitUntil: "domcontentloaded" });
+
+      await page.screenshot({ path: __dirname + "/ss.png" });
+
+      await browser.close();
+    } catch (err) {
+      return res
+        .status(404)
+        .send({ message: "Request for theme not found", status: 404 });
+    }
+
     return res.send({
       title,
       description,
@@ -56,10 +87,24 @@ app.get("/v1", async (req, res) => {
       country,
       currency,
       theme,
+      screenshot: req.protocol + "://" + req.get("host") + "/screenshot",
     });
   } catch (err) {
     return res.status(400).send({ message: "Bad request method", status: 400 });
   }
+});
+
+app.get("/screenshot", (_, res) => {
+  if (fs.existsSync(__dirname + "/ss.png")) {
+    res.sendFile(__dirname + "/ss.png");
+
+    // Remove after the request is done
+    fs.unlinkSync(__dirname + "/ss.png");
+
+    return;
+  }
+
+  return res.status(404).send({ message: "Screenshot not found", status: 404 });
 });
 
 app.get("*", (_, res) =>
