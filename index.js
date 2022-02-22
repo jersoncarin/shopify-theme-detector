@@ -69,7 +69,7 @@ app.get("/v1", async (req, res) => {
       // Goto the page url
       await page.goto(url, { waitUntil: "domcontentloaded" });
 
-      await page.screenshot({ path: __dirname + "/ss.png" });
+      await page.screenshot({ path: process.cwd() + "/ss.png" });
 
       await browser.close();
     } catch (err) {
@@ -95,11 +95,11 @@ app.get("/v1", async (req, res) => {
 });
 
 app.get("/screenshot", (_, res) => {
-  if (fs.existsSync(__dirname + "/ss.png")) {
-    res.sendFile(__dirname + "/ss.png");
+  if (fs.existsSync(process.cwd() + "/ss.png")) {
+    res.sendFile(process.cwd() + "/ss.png");
 
     // Remove after the request is done
-    fs.unlinkSync(__dirname + "/ss.png");
+    fs.unlinkSync(process.cwd() + "/ss.png");
 
     return;
   }
