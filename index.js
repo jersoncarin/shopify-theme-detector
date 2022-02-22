@@ -87,7 +87,7 @@ app.get("/v1", async (req, res) => {
       country,
       currency,
       theme,
-      screenshot: req.protocol + "://" + req.get("host") + "/screenshot",
+      screenshot: "https://" + req.get("host") + "/screenshot",
     });
   } catch (err) {
     return res.status(400).send({ message: "Bad request method", status: 400 });
@@ -98,8 +98,9 @@ app.get("/screenshot", (_, res) => {
   if (fs.existsSync(process.cwd() + "/ss.png")) {
     res.sendFile(process.cwd() + "/ss.png");
 
-    // Remove after the request is done
-    fs.unlinkSync(process.cwd() + "/ss.png");
+    setTimeout(() => {
+      fs.unlinkSync(process.cwd() + "/ss.png");
+    }, 5000);
 
     return;
   }
